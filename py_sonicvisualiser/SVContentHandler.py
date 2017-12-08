@@ -22,7 +22,7 @@
 
 import xml.sax as sax
 import xml.dom.minidom as minidom
-from SVDataset import SVDataset2D, SVDataset3D
+from .SVDataset import SVDataset1D, SVDataset2D, SVDataset3D
 
 class SVContentHandler(sax.ContentHandler):
     """
@@ -51,6 +51,8 @@ class SVContentHandler(sax.ContentHandler):
         if name == 'dataset':
             dim = int(attrs.getValue('dimensions'))
             dataid = attrs.getValue('id')
+            if dim == 1:
+                self.datasets.append(SVDataset1D(self.dom, dataid, self.samplerate))
             if dim == 2:
                 self.datasets.append(SVDataset2D(self.dom, dataid, self.samplerate))
             elif dim == 3:

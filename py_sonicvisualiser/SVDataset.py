@@ -26,16 +26,18 @@ in xml.dom.minidom documents
 
 import xml.dom.minidom
 import collections
+import numpy as np
 
 
-class SVDataset2D(xml.dom.minidom.Text):
+class SVDataset(xml.dom.minidom.Text):
     """
     This class is aimed at storing large datasets in minidom documents
     datasets are stored as iterable structure (lists, numpy arrays, ...)
     This data is converted to sonic visualiser point nodes at writing time
     This allows to avoid the storage of very large xml trees in RAM,
-    and avoid swap 
+    and avoid swap
     """
+
     def __init__(self, domdoc, datasetid, samplerate):
         self.datasetid = datasetid
         self.frames = []
@@ -44,29 +46,32 @@ class SVDataset2D(xml.dom.minidom.Text):
         self.label2int = dict()
         self.int2label = dict()
         self.ownerDocument = domdoc
-        self.dimensions = 2
         self.samplerate = samplerate
+        self.parentNode = None
+        self.tagName = 'dataset'
 
-    def set_data_from_iterable(self, frames, values, labels=None):
+    def set_data_from_iterable(self, frames, values=None, labels=None):
         """
         Initialize a dataset structure from iterable parameters
 
-        :param x: The temporal indices of the dataset
-        :param y: The values of the dataset
-        :type x: iterable
-        :type y: iterable
+        :param frames: The temporal indices of the dataset
+        :param values: The values of the dataset
+        :type frames: iterable
+        :type values: iterable
         """
         if not isinstance(frames, collections.Iterable):
-            raise TypeError, "frames must be an iterable"
-        if not isinstance(values, collections.Iterable):
-            raise TypeError, "values must be an iterable"
-        assert(len(frames) == len(values))
-        self.frames = frames
+            raise TypeError("frames must be an iterable")
+        if values is not None:
+            if not isinstance(values, collections.Iterable):
+                raise TypeError("values must be an iterable")
+            assert(len(frames) == len(values))
+
+        self.frames = list(frames)
         self.values = values
         if labels is None:
-            self.label2int['New Point'] = 0
-            self.int2label[0] = 'New Point'
-            self.labels = [0 for i in xrange(len(frames))]
+            self.label2int[''] = 0
+            self.int2label[0] = ''
+            self.labels = [0 for i in range(len(self.frames))]
         else:
             if not isinstance(labels, collections.Iterable):
                 raise TypeError("labels must be an iterable")
@@ -75,16 +80,24 @@ class SVDataset2D(xml.dom.minidom.Text):
                     self.label2int[l] = len(self.label2int)
                     self.int2label[len(self.int2label)] = l
                 self.labels.append(self.label2int[l])
-    
+
     def append_xml_point(self, attrs):
         self.frames.append(int(attrs.getValue('frame')))
-        self.values.append(float(attrs.getValue('value')))
+        if self.values is not None:
+            self.values.append(float(attrs.getValue('value')))
         l = attrs.getValue('label')
         if l not in self.label2int:
             self.label2int[l] = len(self.label2int)
             self.int2label[len(self.int2label)] = l
         self.labels.append(self.label2int[l])
-            
+
+    def get_instants(self):
+        return np.divide(self.frames,self.samplerate)
+
+    def get_labels(self):
+        if self.labels is None:
+            return None
+        return list(map(lambda x: self.int2label[x], self.labels))
 
     def writexml(self, writer, indent="", addindent="", newl=""):
         """
@@ -95,14 +108,49 @@ class SVDataset2D(xml.dom.minidom.Text):
         # dataset.setAttribute('dimensions', '2')
         writer.write('%s<dataset id="%s" dimensions="%s">%s' % (indent, self.datasetid, self.dimensions, newl))
         indent2 = indent + addindent
-        for l, x, y in zip(self.labels, self.frames, self.values):
-            writer.write('%s<point label="%s" frame="%d" value="%f"/>%s' % (indent2, self.int2label[l], x, y, newl))
+        if self.values is not None:
+            for l, x, y in zip(self.labels, self.frames, self.values):
+                writer.write('%s<point label="%s" frame="%d" value="%f"/>%s' % (indent2, self.int2label[l], x, y, newl))
+        else:
+            for x, l in zip(self.frames, self.labels):
+                writer.write('%s<point frame="%d" label="%s"/>%s' % (indent2, x, self.int2label[l], newl))
         writer.write('%s</dataset>%s' % (indent, newl))
 
 
 
+class SVDataset1D(SVDataset):
+    """
+    This class is aimed at storing large datasets in minidom documents
+    datasets are stored as iterable structure (lists, numpy arrays, ...)
+    This data is converted to sonic visualiser point nodes at writing time
+    This allows to avoid the storage of very large xml trees in RAM,
+    and avoid swap
+    """
+
+    def __init__(self, domdoc, datasetid, samplerate):
+        SVDataset.__init__(self, domdoc, datasetid, samplerate)
+        self.dimensions = 1
+        self.values = None
+
+    def set_data_from_iterable(self, frames, labels=None):
+        SVDataset.set_data_from_iterable(self, frames, None, labels)
+
+
+class SVDataset2D(SVDataset):
+    """
+    This class is aimed at storing large datasets in minidom documents
+    datasets are stored as iterable structure (lists, numpy arrays, ...)
+    This data is converted to sonic visualiser point nodes at writing time
+    This allows to avoid the storage of very large xml trees in RAM,
+    and avoid swap 
+    """
+    def __init__(self, domdoc, datasetid, samplerate):
+        SVDataset.__init__(self, domdoc, datasetid, samplerate)
+        self.dimensions = 2
+
 
 class SVDataset3D(SVDataset2D):
+
     def __init__(self, domdoc, datasetid, samplerate):
         SVDataset2D.__init__(self, domdoc, datasetid, samplerate)
         self.durations = []

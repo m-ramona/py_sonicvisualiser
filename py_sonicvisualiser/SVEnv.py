@@ -32,8 +32,8 @@ from os.path import basename
 import io
 #import wave
 import numpy as np
-from SVDataset import SVDataset2D, SVDataset3D
-from SVContentHandler import SVContentHandler
+from .SVDataset import SVDataset1D, SVDataset2D, SVDataset3D
+from .SVContentHandler import SVContentHandler
 import scipy.io.wavfile as SW
 import wave
 
@@ -290,6 +290,80 @@ class SVEnv:
         return view
 
 
+    def add_instants_annotations(self, temp_idx, labels=None, colourName='Blue', colour='#0000FF', name='', view=None, presentationName=None):
+        """
+        add a continous annotation layer
+
+        Args:
+          temp_idx (float iterable): The temporal indices of invervals
+
+        Kwargs:
+          view (<DOM Element: view>): environment view used to display the spectrogram, if set to None, a new view is created
+
+        Returns:
+          <DOM Element: view>: the view used to store the spectrogram
+
+        """
+
+        model = self.data.appendChild(self.doc.createElement('model'))
+        imodel = self.nbdata
+
+        if temp_idx is None:
+            temp_idx = []
+
+        if len(temp_idx) == 0:
+            start_time = 0
+            end_time = 0
+        else:
+            start_time = int(min(temp_idx) * self.samplerate)
+            end_time = int(max(temp_idx) * self.samplerate)
+
+        for atname, atval in [('id', imodel + 1),
+                              ('dataset', imodel),
+                              ('name', name),
+                              ('sampleRate', self.samplerate),
+                              ('start', start_time),
+                              ('end', end_time),
+                              ('type', 'sparse'),
+                              ('dimensions', '1'),
+                              ('resolution', '1'),
+                              ('notifyOnAdd', 'true'),
+                              ]:
+            model.setAttribute(atname, str(atval))
+
+        # dataset = self.data.appendChild(self.doc.createElement('dataset'))
+        # dataset.setAttribute('id', str(imodel))
+        # dataset.setAttribute('dimensions', '2')
+        # self.nbdata += 2
+
+        # datasetnode = SVDataset2D(self.doc, str(imodel), self.samplerate)
+        # datasetnode.set_data_from_iterable(map(int, np.array(x) * self.samplerate), y)
+        # data = dataset.appendChild(datasetnode)
+        dataset = self.data.appendChild(SVDataset1D(self.doc, str(imodel), self.samplerate))
+        dataset.set_data_from_iterable(frames=map(int, np.array(temp_idx) * self.samplerate),labels=labels)
+        self.nbdata += 2
+
+        ###### add layers
+        if self.addRulers:
+            valruler = self.__add_time_ruler()
+        vallayer = self.__add_instants_layer(imodel + 1)
+        vallayer.setAttribute('colourName', colourName)
+        vallayer.setAttribute('colour', colour)
+        if presentationName:
+            vallayer.setAttribute('presentationName', presentationName)
+        if labels is not None:
+            vallayer.setAttribute('plotStyle','1')
+
+        if view is None:
+            view = self.__add_view()
+        elif isinstance(view, int):
+            view = self.get_views()[view]
+        if self.addRulers:
+            self.__add_layer_reference(view, valruler)
+        self.__add_layer_reference(view, vallayer)
+        return view
+
+
     def save(self, outfname):
         """
         Save the environment of a sv file to be used with soniv visualiser
@@ -381,6 +455,15 @@ class SVEnv:
         layer.setAttribute('model', str(model))
         layer.setAttribute('type', typename)
         return layer
+
+    def __add_instants_layer(self, model):
+        layer = self.__add_layer(model, 'timeinstants')
+        layer.setAttribute('plotStyle', '0')
+        layer.setAttribute('verticalScale', '0')
+        layer.setAttribute('darkBackground', 'false')
+        layer.setAttribute('name', self.__namefact('Time Instants'))
+        return layer
+
 
     def __add_val_layer(self, model):
         layer = self.__add_layer(model, 'timevalues')
