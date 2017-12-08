@@ -32,11 +32,11 @@ KEYWORDS = 'audio analysis features visualization plot annotation sonicvisualise
 
 setup(
   name = "py_sonicvisualiser",
-  url='https://github.com/DavidDoukhan/py_sonicvisualiser',
+  url='https://github.com/m-ramona/py_sonicvisualiser',
   description = "manipulating sonic-visualiser environment files",
   long_description = open('README.md').read(),
-  author = "David Doukhan",
-  author_email = "david.doukhan@gmail.com",
+  author = "Mathieu Ramona",
+  author_email = "mathieu.ramona.pro@gmail.com",
 #  version = '0.0.1',
 
    # versioneer

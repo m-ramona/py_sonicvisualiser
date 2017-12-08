@@ -1,7 +1,8 @@
-AUTHOR
+AUTHORS
 =======
 
 David Doukhan - LIMSI-CNRS - doukhan@limsi.fr - david.doukhan@gmail.com
+Mathieu Ramona - Spotify - mathieur@spotify.com - mathieu.ramona.pro@gmail.com
 
 CREDITS
 =======
