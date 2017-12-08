@@ -30,6 +30,7 @@ import xml.sax as sax
 from bz2 import BZ2File
 from os.path import basename
 import io
+import os
 #import wave
 import numpy as np
 from .SVDataset import SVDataset1D, SVDataset2D, SVDataset3D
@@ -102,13 +103,39 @@ class SVEnv:
         return SVEnv(samplerate, nframes, wavpath)
 
     @staticmethod
-    def parse(svenvfname):
-        f = BZ2File(svenvfname)
+    def check_bzip(svenvfname):
         svch = SVContentHandler()
-        xml = io.TextIOWrapper(f,encoding='utf8')
+        try:
+            # Trying to decompress bzip2
+            f = BZ2File(svenvfname)
+            xml = io.TextIOWrapper(f,encoding='utf_8')
+            xml.read(1)
+            return True
+        except OSError:
+            # Trying to directly parse XML
+            xml = open(svenvfname, "r", encoding="utf-8")
+            s = xml.read()
+            if s.startswith('<?xml'):
+                tmpfile = svenvfname + '.tmp'
+                f = BZ2File(tmpfile, 'w')
+                f.write(s.encode())
+                f.close()
+                os.rename(tmpfile,svenvfname)
+                return True
+        return False
+
+
+    @staticmethod
+    def parse(svenvfname):
+        if not SVEnv.check_bzip(svenvfname):
+            return None
+
+        svch = SVContentHandler()
+        f = BZ2File(svenvfname)
+        xml = io.TextIOWrapper(f, encoding='utf_8')
         sax.parse(xml, svch)
-        #print svch.dom.toprettyxml()
-        
+        # print svch.dom.toprettyxml()
+
         ret = SVEnv(svch.samplerate, svch.nframes, svch.mediafile)
         ret.doc = svch.dom
         ret.data = svch.data
