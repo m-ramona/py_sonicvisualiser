@@ -364,6 +364,23 @@ class SVEnv:
         return view
 
 
+    def get_views(self):
+        return self.display.getElementsByTagName("view")
+
+
+    def get_tag_as_dict(self,tag_name,nodeType=None,idAttribute=None):
+        res = {}
+        if nodeType is None:
+            for element in self.data.getElementsByTagName(tag_name):
+                res[element.getAttribute('id')] = element
+        else:
+            for node in self.data.childNodes:
+                if node.nodeType == nodeType and \
+                        (tag_name == "*" or node.tagName == tag_name):
+                    res[node.__getattribute__(idAttribute)] = node
+        return res
+
+
     def save(self, outfname):
         """
         Save the environment of a sv file to be used with soniv visualiser
