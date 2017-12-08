@@ -65,6 +65,7 @@ class SVEnv:
         window.setAttribute('width', str(self.defwidth))
         window.setAttribute('height', str(856))
         self.selections = root.appendChild(doc.createElement('selections'))
+        self.addRulers = False
 
 
         self.nbdata = 0
@@ -135,10 +136,14 @@ class SVEnv:
 
         """
         spectrolayer = self.__add_spectrogram(0)
-        spectroruler = self.__add_time_ruler()
+        if self.addRulers:
+            spectroruler = self.__add_time_ruler()
         if view is None:
             view = self.__add_view()
-        self.__add_layer_reference(view, spectroruler)
+        elif isinstance(view, int):
+            view = self.get_views()[view]
+        if self.addRulers:
+            self.__add_layer_reference(view, spectroruler)
         self.__add_layer_reference(view, spectrolayer)
         return view
 
@@ -192,7 +197,8 @@ class SVEnv:
         self.nbdata += 2
 
         ###### add layers
-        valruler = self.__add_time_ruler()
+        if self.addRulers:
+            valruler = self.__add_time_ruler()
         vallayer = self.__add_val_layer(imodel + 1)
         vallayer.setAttribute('colourName', colourName)
         vallayer.setAttribute('colour', colour)
@@ -209,7 +215,10 @@ class SVEnv:
 
         if view is None:
             view = self.__add_view()
-        self.__add_layer_reference(view, valruler)
+        elif isinstance(view, int):
+            view = self.get_views()[view]
+        if self.addRulers:
+            self.__add_layer_reference(view, valruler)
         self.__add_layer_reference(view, vallayer)
         return view
 
@@ -255,8 +264,9 @@ class SVEnv:
         # dataset.setAttribute('id', str(imodel))
         # dataset.setAttribute('dimensions', '3')
         self.nbdata+= 2
-        
-        valruler = self.__add_time_ruler()
+
+        if self.addRulers:
+            valruler = self.__add_time_ruler()
         vallayer = self.__add_region_layer(imodel + 1, name)
         vallayer.setAttribute('colourName', colourName)
         vallayer.setAttribute('colour', colour)
@@ -265,7 +275,8 @@ class SVEnv:
 
         if view is None:
             view = self.__add_view()
-        self.__add_layer_reference(view, valruler)
+        if self.addRulers:
+            self.__add_layer_reference(view, valruler)
         self.__add_layer_reference(view, vallayer)
 
         # if values is None:
@@ -343,11 +354,13 @@ class SVEnv:
         playparam.setAttribute('model', '0')
 
         # add time ruler
-        wavetimeruler = self.__add_time_ruler()
+        if self.addRulers:
+            wavetimeruler = self.__add_time_ruler()
         wavelayer = self.__add_waveform(0)
 
         view = self.__add_view()
-        self.__add_layer_reference(view, wavetimeruler)
+        if self.addRulers:
+            self.__add_layer_reference(view, wavetimeruler)
         self.__add_layer_reference(view, wavelayer)
 
         
