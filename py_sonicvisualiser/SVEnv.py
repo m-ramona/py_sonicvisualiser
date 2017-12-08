@@ -29,6 +29,7 @@ import xml.dom.minidom as minidom
 import xml.sax as sax
 from bz2 import BZ2File
 from os.path import basename
+import io
 #import wave
 import numpy as np
 from SVDataset import SVDataset2D, SVDataset3D
@@ -103,7 +104,8 @@ class SVEnv:
     def parse(svenvfname):
         f = BZ2File(svenvfname)
         svch = SVContentHandler()
-        sax.parse(f, svch)
+        xml = io.TextIOWrapper(f,encoding='utf8')
+        sax.parse(xml, svch)
         #print svch.dom.toprettyxml()
         
         ret = SVEnv(svch.samplerate, svch.nframes, svch.mediafile)
@@ -285,7 +287,9 @@ class SVEnv:
           outfname(str): full path to the file storing the environment
         """
         f = BZ2File(outfname, 'w')
-        self.doc.writexml(f, addindent='  ', newl='\n')
+        xml = io.StringIO()
+        self.doc.writexml(xml, addindent='  ', newl='\n', encoding='utf8')
+        f.write(xml.getvalue().encode())
         f.close()     
 
 

@@ -43,7 +43,7 @@ class SVContentHandler(sax.ContentHandler):
         if name in ['model', 'dataset', 'layer']:
             self.nbdata += 1
 
-        if name == 'model' and attrs.has_key('mainModel') and attrs.getValue('mainModel') == 'true':
+        if name == 'model' and 'mainModel' in attrs and attrs.getValue('mainModel') == 'true':
             self.samplerate = int(attrs.getValue('sampleRate'))
             self.nframes = int(attrs.getValue('end'))
             self.mediafile = attrs.getValue('file')
