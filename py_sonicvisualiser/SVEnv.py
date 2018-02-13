@@ -108,14 +108,15 @@ class SVEnv:
         try:
             # Trying to decompress bzip2
             f = BZ2File(svenvfname)
-            xml = io.TextIOWrapper(f,encoding='utf_8')
-            xml.read(1)
+            stream = io.TextIOWrapper(f,encoding='utf_8')
+            stream.read(1)
             return True
         except OSError:
             # Trying to directly parse XML
-            xml = open(svenvfname, "r", encoding="utf-8")
-            s = xml.read()
+            stream = open(svenvfname, "r", encoding="utf-8")
+            s = stream.read()
             if s.startswith('<?xml'):
+                # It is indeed XML
                 tmpfile = svenvfname + '.tmp'
                 f = BZ2File(tmpfile, 'w')
                 f.write(s.encode())
@@ -127,12 +128,17 @@ class SVEnv:
 
     @staticmethod
     def parse(svenvfname):
-        if not SVEnv.check_bzip(svenvfname):
-            return None
-
         svch = SVContentHandler()
-        f = BZ2File(svenvfname)
-        xml = io.TextIOWrapper(f, encoding='utf_8')
+        try:
+            # Trying to decompress bzip2
+            f = BZ2File(svenvfname)
+            xml = io.TextIOWrapper(f,encoding='utf_8')
+        except OSError:
+            # Trying to directly parse XML
+            xml = open(svenvfname, "r", encoding="utf-8")
+            s = stream.read()
+            if not s.startswith('<?xml'):
+                return None
         sax.parse(xml, svch)
         # print svch.dom.toprettyxml()
 
