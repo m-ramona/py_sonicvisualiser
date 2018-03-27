@@ -35,7 +35,6 @@ import os
 import numpy as np
 from .SVDataset import SVDataset1D, SVDataset2D, SVDataset3D
 from .SVContentHandler import SVContentHandler
-import scipy.io.wavfile as SW
 import wave
 
 class SVEnv:
@@ -88,6 +87,7 @@ class SVEnv:
         """
 
         try:
+            import scipy.io.wavfile as SW
             samplerate, data =  SW.read(wavpath)
             nframes = data.shape[0]
         except:

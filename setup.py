@@ -48,8 +48,7 @@ setup(
 #        'xml',
 #        'bz2',
 #        'wave',
-        'numpy',
-        'scipy'
+        'numpy'
         ],
   platforms=['OS Independent'],
   license='Gnu Public License V2',
